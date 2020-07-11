@@ -33,7 +33,7 @@ class MyBrokerChangeListener(zookeeperClient: MyZookeeperClient) extends IZkChil
       }
 
       if (deadBrokerIds.nonEmpty) {
-        info("Brokers %s are dead at %s ".format(newBrokerIds.mkString(","), parentPath))
+        info("Brokers %s are dead at %s ".format(deadBrokerIds.mkString(","), parentPath))
       }
 
     } catch {

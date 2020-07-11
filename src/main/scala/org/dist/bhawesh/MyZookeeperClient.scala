@@ -1,7 +1,8 @@
 package org.dist.bhawesh
 
 import org.I0Itec.zkclient.ZkClient
-import org.I0Itec.zkclient.exception.ZkNoNodeException
+import org.I0Itec.zkclient.exception.{ZkNoNodeException, ZkNodeExistsException}
+import org.dist.simplekafka.ControllerExistsException
 import org.dist.simplekafka.common.JsonSerDes
 import org.dist.simplekafka.util.ZkUtils
 import org.dist.simplekafka.util.ZkUtils.Broker
@@ -9,12 +10,27 @@ import org.dist.simplekafka.util.ZkUtils.Broker
 import scala.jdk.CollectionConverters._
 
 class MyZookeeperClient(zkClient: ZkClient) {
+  def tryCreatingControllerPath(leaderId: String) = {
+    try {
+      createEphemeralPath(zkClient, ControllerPath, leaderId)
+    } catch {
+      case exception: ZkNodeExistsException =>
+        val electedLeader: String = zkClient.readData(ControllerPath)
+        throw ControllerExistsException(electedLeader)
+    }
+  }
+
+  val BrokerIdsPath = "/brokers/ids"
+  val ControllerPath = "/controller"
+
+  def subscribeControllerChangeListener(controllerZookeeper: ControllerZookeeper) = {
+    zkClient.subscribeDataChanges(ControllerPath, new ControllerChangeListener(controllerZookeeper, zkClient))
+  }
+
   def getBrokerInfo(brokerId: Int): Broker = {
     val serialisedBrokerInfo: String = zkClient.readData(getBrokerPath(brokerId.toInt))
     JsonSerDes.deserialize(serialisedBrokerInfo.getBytes, classOf[Broker])
   }
-
-  val BrokerIdsPath = "/brokers/ids"
 
   def subscribeBrokerChangeListener(brokerChangeListener: MyBrokerChangeListener) = {
     zkClient.subscribeChildChanges(BrokerIdsPath, brokerChangeListener)
