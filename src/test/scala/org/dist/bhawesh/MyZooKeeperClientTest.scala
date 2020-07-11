@@ -37,5 +37,11 @@ class MyZooKeeperClientTest extends ZookeeperTestHarness {
       brokerChangeListener.liveBrokers.size == 3
     }, "Waiting for all brokers to get added", 1000)
 
+    zkClient2.close()
+
+    TestUtils.waitUntilTrue(() => {
+      brokerChangeListener.liveBrokers.size == 2
+    }, "Waiting for all brokers to get added", 1000)
+
   }
 }

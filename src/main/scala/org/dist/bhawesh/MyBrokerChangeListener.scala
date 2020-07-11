@@ -17,14 +17,25 @@ class MyBrokerChangeListener(zookeeperClient: MyZookeeperClient) extends IZkChil
     try {
       val currentBrokerIds: Set[Int] = currentChilds.asScala.map(_.toInt).toSet
       val newBrokerIds: Set[Int] = currentBrokerIds -- getLiveBrokerIds
+      val deadBrokerIds: Set[Int] = getLiveBrokerIds -- currentBrokerIds
 
       newBrokerIds.foreach((brokerId: Int) => {
         liveBrokers = liveBrokers + zookeeperClient.getBrokerInfo(brokerId)
       })
 
+      deadBrokerIds.foreach((brokerId: Int) => {
+        val deadBrokers = liveBrokers.filter(b => deadBrokerIds.contains(b.id))
+        liveBrokers = liveBrokers -- deadBrokers
+      })
+
       if (newBrokerIds.nonEmpty) {
         info("New Brokers %s added to path %s ".format(newBrokerIds.mkString(","), parentPath))
       }
+
+      if (deadBrokerIds.nonEmpty) {
+        info("Brokers %s are dead at %s ".format(newBrokerIds.mkString(","), parentPath))
+      }
+
     } catch {
       case e: Throwable => error("Error while handling broker changes", e)
     }
