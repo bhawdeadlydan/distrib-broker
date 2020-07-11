@@ -28,13 +28,6 @@ class MyZookeeperClientTest extends ZookeeperTestHarness {
     val myZookeeperClient2 = new MyZookeeperClient(zkCLient2);
     myZookeeperClient2.registerBroker(Broker(1, "10.10.10.11", 8000))
 
-<<<<<<< HEAD
-=======
-    myZookeeperClient.registerBroker(Broker(0, "10.10.10.10", TestUtils.choosePort()))
-    myZookeeperClient.registerBroker(Broker(1, "10.10.10.11", TestUtils.choosePort()))
-    myZookeeperClient.registerBroker(Broker(2, "10.10.10.12", TestUtils.choosePort()))
->>>>>>> [Bhawesh] Fix sample zookeeper tests.
-
     val zkCLient3 = new ZkClient(zkConnect, zkSessionTimeout, zkConnectionTimeout, ZKStringSerializer)
     val myZookeeperClient3 = new MyZookeeperClient(zkCLient3);
     myZookeeperClient3.registerBroker(Broker(2, "10.10.10.12", 8000))
