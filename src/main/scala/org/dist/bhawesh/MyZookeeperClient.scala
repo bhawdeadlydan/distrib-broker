@@ -9,14 +9,21 @@ import org.dist.simplekafka.util.ZkUtils.Broker
 import scala.jdk.CollectionConverters._
 
 class MyZookeeperClient(zkClient: ZkClient) {
+  def getBrokerInfo(brokerId: Int): Broker = {
+    val serialisedBrokerInfo: String = zkClient.readData(getBrokerPath(brokerId.toInt))
+    JsonSerDes.deserialize(serialisedBrokerInfo.getBytes, classOf[Broker])
+  }
 
   val BrokerIdsPath = "/brokers/ids"
+
+  def subscribeBrokerChangeListener(brokerChangeListener: MyBrokerChangeListener) = {
+    zkClient.subscribeChildChanges(BrokerIdsPath, brokerChangeListener)
+  }
 
   def getAllBrokers(): Set[Broker] = {
     zkClient.getChildren(BrokerIdsPath).asScala.map {
       brokerId: String => {
-        val serialisedBrokerInfo: String = zkClient.readData(getBrokerPath(brokerId.toInt))
-        JsonSerDes.deserialize(serialisedBrokerInfo.getBytes, classOf[Broker])
+        getBrokerInfo(brokerId.toInt)
       }
     }.toSet
   }
