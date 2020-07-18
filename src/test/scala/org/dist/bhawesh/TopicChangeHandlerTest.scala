@@ -18,7 +18,7 @@ class TopicChangeHandlerTest extends ZookeeperTestHarness {
     createTopicCommand.createTopic(topicName = "topic1", noOfPartitions = 2, replicationFactor = 2)
 
     TestUtils.waitUntilTrue(() => {
-      zookeeperController.replicas.size > 0
+      zookeeperController.replicas.size > 1
     }, "Waiting for topic metadata", 1000)
   }
 }
