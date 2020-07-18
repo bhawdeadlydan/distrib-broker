@@ -1,8 +1,14 @@
 package org.dist.bhawesh
 
-import org.dist.simplekafka.ControllerExistsException
+import org.dist.simplekafka.{ControllerExistsException, PartitionReplicas}
 
 class ControllerZookeeper(zookeeperClient: MyZookeeperClient, val brokerId: Int) {
+  var replicas:Seq[PartitionReplicas] = List()
+  def onTopicChange(topicName: String, replicas: Seq[PartitionReplicas]): Unit = {
+
+    this.replicas = replicas
+  }
+
   var currentLeader = -1
 
   def elect() = {
@@ -18,6 +24,7 @@ class ControllerZookeeper(zookeeperClient: MyZookeeperClient, val brokerId: Int)
 
   def startup() = {
     zookeeperClient.subscribeControllerChangeListener(this)
+    zookeeperClient.subscribeTopicChangeListener(this)
     elect()
   }
 

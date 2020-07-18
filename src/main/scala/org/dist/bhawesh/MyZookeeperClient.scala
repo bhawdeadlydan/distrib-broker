@@ -1,5 +1,7 @@
 package org.dist.bhawesh
 
+import java.util
+
 import com.fasterxml.jackson.core.`type`.TypeReference
 import org.I0Itec.zkclient.ZkClient
 import org.I0Itec.zkclient.exception.{ZkNoNodeException, ZkNodeExistsException}
@@ -29,12 +31,12 @@ class MyZookeeperClient(zkClient: ZkClient) {
     createPersistentPath(zkClient, topicsPath, topicsData)
   }
 
-  def getAllBrokerIds(): Set[Int] = {
+  def getAllBrokerIds: Set[Int] = {
     zkClient.getChildren(BrokerIdsPath).asScala.map(_.toInt).toSet
   }
 
-  def subscribeTopicChangeListener(topicChangeListener: TopicChangeHandler): Any = {
-    zkClient.subscribeChildChanges(TopicPath, topicChangeListener)
+  def subscribeTopicChangeListener(controllerZookeeper: ControllerZookeeper): Any = {
+    zkClient.subscribeChildChanges(TopicPath, new TopicChangeHandler(this, controllerZookeeper))
   }
 
   val TopicPath = "/topics"
@@ -48,7 +50,7 @@ class MyZookeeperClient(zkClient: ZkClient) {
     JsonSerDes.deserialize[List[PartitionReplicas]](partitionAssignmentInfo.getBytes, new TypeReference[List[PartitionReplicas]]() {})
   }
 
-  def tryCreatingControllerPath(leaderId: String) = {
+  def tryCreatingControllerPath(leaderId: String): Unit = {
     try {
       createEphemeralPath(zkClient, ControllerPath, leaderId)
     } catch {
@@ -61,7 +63,7 @@ class MyZookeeperClient(zkClient: ZkClient) {
   val BrokerIdsPath = "/brokers/ids"
   val ControllerPath = "/controller"
 
-  def subscribeControllerChangeListener(controllerZookeeper: ControllerZookeeper) = {
+  def subscribeControllerChangeListener(controllerZookeeper: ControllerZookeeper): Unit = {
     zkClient.subscribeDataChanges(ControllerPath, new ControllerChangeListener(controllerZookeeper, zkClient))
   }
 
@@ -70,11 +72,11 @@ class MyZookeeperClient(zkClient: ZkClient) {
     JsonSerDes.deserialize(serialisedBrokerInfo.getBytes, classOf[Broker])
   }
 
-  def subscribeBrokerChangeListener(brokerChangeListener: MyBrokerChangeListener) = {
+  def subscribeBrokerChangeListener(brokerChangeListener: MyBrokerChangeListener): util.List[String] = {
     zkClient.subscribeChildChanges(BrokerIdsPath, brokerChangeListener)
   }
 
-  def getAllBrokers(): Set[Broker] = {
+  def getAllBrokers: Set[Broker] = {
     zkClient.getChildren(BrokerIdsPath).asScala.map {
       brokerId: String => {
         getBrokerInfo(brokerId.toInt)
@@ -82,14 +84,14 @@ class MyZookeeperClient(zkClient: ZkClient) {
     }.toSet
   }
 
-  def createParentPath(zkClient: ZkClient, brokerPath: String) = {
+  def createParentPath(zkClient: ZkClient, brokerPath: String): Unit = {
     val parentDirectory = brokerPath.substring(0, brokerPath.lastIndexOf('/'))
     if (parentDirectory.length != 0) {
       zkClient.createPersistent(parentDirectory, true)
     }
   }
 
-  def createEphemeralPath(zkClient: ZkClient, brokerPath: String, brokerData: String) = {
+  def createEphemeralPath(zkClient: ZkClient, brokerPath: String, brokerData: String): Unit = {
     try {
       zkClient.createEphemeral(brokerPath, brokerData)
     }

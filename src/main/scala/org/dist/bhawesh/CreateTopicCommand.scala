@@ -6,11 +6,11 @@ import org.dist.simplekafka.PartitionReplicas
 
 import scala.collection.mutable
 
-case class CreateTopicCommand(zookeeperClient: MyZookeeperClient) {
+class CreateTopicCommand(zookeeperClient: MyZookeeperClient) {
   val rand = new Random
 
   def createTopic(topicName: String, noOfPartitions: Int, replicationFactor: Int): Unit = {
-    val brokerIds = zookeeperClient.getAllBrokerIds()
+    val brokerIds = zookeeperClient.getAllBrokerIds
     //get list of brokers
     //assign replicas to partition
     val partitionReplicas: Set[PartitionReplicas] = assignReplicasToBrokers(brokerIds.toList, noOfPartitions, replicationFactor)
@@ -18,7 +18,6 @@ case class CreateTopicCommand(zookeeperClient: MyZookeeperClient) {
     zookeeperClient.setPartitionReplicasForTopic(topicName, partitionReplicas)
 
   }
-
 
 
   //on new topic creation

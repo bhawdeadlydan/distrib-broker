@@ -14,7 +14,7 @@ class MyZooKeeperClientTest extends ZookeeperTestHarness {
     myZookeeperClient.registerBroker(Broker(1, "10.10.10.11", TestUtils.choosePort()))
     myZookeeperClient.registerBroker(Broker(2, "10.10.10.12", TestUtils.choosePort()))
 
-    assert(3 == myZookeeperClient2.getAllBrokers().size)
+    assert(3 == myZookeeperClient2.getAllBrokers.size)
   }
   test("should get notified when broker is registered") {
     val zkClient1 = new ZkClient(zkConnect, zkSessionTimeout, zkConnectionTimeout, ZKStringSerializer)
