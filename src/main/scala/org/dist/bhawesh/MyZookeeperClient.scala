@@ -1,8 +1,9 @@
 package org.dist.bhawesh
 
+import com.fasterxml.jackson.core.`type`.TypeReference
 import org.I0Itec.zkclient.ZkClient
 import org.I0Itec.zkclient.exception.{ZkNoNodeException, ZkNodeExistsException}
-import org.dist.simplekafka.ControllerExistsException
+import org.dist.simplekafka.{ControllerExistsException, PartitionReplicas}
 import org.dist.simplekafka.common.JsonSerDes
 import org.dist.simplekafka.util.ZkUtils
 import org.dist.simplekafka.util.ZkUtils.Broker
@@ -10,6 +11,43 @@ import org.dist.simplekafka.util.ZkUtils.Broker
 import scala.jdk.CollectionConverters._
 
 class MyZookeeperClient(zkClient: ZkClient) {
+
+  def createPersistentPath(zkClient: ZkClient, topicsPath: String, topicsData: String): Unit = {
+    try {
+      zkClient.createPersistent(topicsPath, topicsData)
+    } catch {
+      case e: ZkNoNodeException => {
+        createParentPath(zkClient, topicsPath)
+        zkClient.createPersistent(topicsPath, topicsData)
+      }
+    }
+  }
+
+  def setPartitionReplicasForTopic(topicName: String, partitionReplicas: Set[PartitionReplicas]): Unit = {
+    val topicsPath = getTopicPath(topicName)
+    val topicsData = JsonSerDes.serialize(partitionReplicas)
+    createPersistentPath(zkClient, topicsPath, topicsData)
+  }
+
+  def getAllBrokerIds(): Set[Int] = {
+    zkClient.getChildren(BrokerIdsPath).asScala.map(_.toInt).toSet
+  }
+
+  def subscribeTopicChangeListener(topicChangeListener: TopicChangeHandler): Any = {
+    zkClient.subscribeChildChanges(TopicPath, topicChangeListener)
+  }
+
+  val TopicPath = "/topics"
+
+  def getTopicPath(topicName: String): String = {
+    TopicPath + "/" + topicName
+  }
+
+  def readPartitionAssignmentsFor(topicName: String): Seq[PartitionReplicas] = {
+    val partitionAssignmentInfo: String = zkClient.readData(getTopicPath(topicName))
+    JsonSerDes.deserialize[List[PartitionReplicas]](partitionAssignmentInfo.getBytes, new TypeReference[List[PartitionReplicas]]() {})
+  }
+
   def tryCreatingControllerPath(leaderId: String) = {
     try {
       createEphemeralPath(zkClient, ControllerPath, leaderId)

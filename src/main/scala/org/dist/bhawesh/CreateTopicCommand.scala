@@ -1,17 +1,15 @@
-package org.dist.simplekafka
+package org.dist.bhawesh
 
 import java.util.Random
 
-import org.dist.simplekafka.util.AdminUtils.rand
+import org.dist.simplekafka.PartitionReplicas
 
-import scala.collection.{Map, Seq, mutable}
+import scala.collection.mutable
 
-case class PartitionReplicas(partitionId:Int, brokerIds:List[Int])
-
-class CreateTopicCommand(zookeeperClient:ZookeeperClient, partitionAssigner:ReplicaAssignmentStrategy = new ReplicaAssignmentStrategy()) {
+case class CreateTopicCommand(zookeeperClient: MyZookeeperClient) {
   val rand = new Random
 
-  def createTopic(topicName:String, noOfPartitions:Int, replicationFactor:Int) = {
+  def createTopic(topicName: String, noOfPartitions: Int, replicationFactor: Int): Unit = {
     val brokerIds = zookeeperClient.getAllBrokerIds()
     //get list of brokers
     //assign replicas to partition
@@ -21,10 +19,13 @@ class CreateTopicCommand(zookeeperClient:ZookeeperClient, partitionAssigner:Repl
 
   }
 
+
+
   //on new topic creation
   //get partition assignments
   //select leader for each partition
   //send metadata request with leader and isr to all the brokers
+
 
   /**
    * There are 2 goals of replica assignment:
@@ -71,4 +72,3 @@ class CreateTopicCommand(zookeeperClient:ZookeeperClient, partitionAssigner:Repl
     (firstReplicaIndex + shift) % nBrokers
   }
 }
-
